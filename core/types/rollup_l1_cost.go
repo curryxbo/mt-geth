@@ -54,6 +54,8 @@ var (
 	L1BaseFeeSlot = common.BigToHash(big.NewInt(1))
 	OverheadSlot  = common.BigToHash(big.NewInt(5))
 	ScalarSlot    = common.BigToHash(big.NewInt(6))
+	//DaFeeSlot       = common.BigToHash(big.NewInt(7))
+	//DaFeeScalarSlot = common.BigToHash(big.NewInt(8))
 )
 
 var L1BlockAddr = common.HexToAddress("0x4200000000000000000000000000000000000015")
@@ -63,7 +65,7 @@ var L1BlockAddr = common.HexToAddress("0x420000000000000000000000000000000000001
 // It returns nil if there is no applicable cost function.
 func NewL1CostFunc(config *params.ChainConfig, statedb StateGetter) L1CostFunc {
 	cacheBlockNum := ^uint64(0)
-	var l1BaseFee, overhead, scalar *big.Int
+	var l1BaseFee, overhead, scalar, daFee, daFeeScalar *big.Int
 	return func(blockNum uint64, blockTime uint64, msg RollupMessage) *big.Int {
 		rollupDataGas := msg.RollupDataGas().DataGas(blockTime, config) // Only fake txs for RPC view-calls are 0.
 		if config.Mantle == nil || msg.IsDepositTx() || rollupDataGas == 0 {
@@ -73,16 +75,21 @@ func NewL1CostFunc(config *params.ChainConfig, statedb StateGetter) L1CostFunc {
 			l1BaseFee = statedb.GetState(L1BlockAddr, L1BaseFeeSlot).Big()
 			overhead = statedb.GetState(L1BlockAddr, OverheadSlot).Big()
 			scalar = statedb.GetState(L1BlockAddr, ScalarSlot).Big()
+			//daFee = statedb.GetState(L1BlockAddr, DaFeeSlot).Big()
+			//daFeeScalar = statedb.GetState(L1BlockAddr, DaFeeScalarSlot).Big()
 			cacheBlockNum = blockNum
 		}
-		return L1Cost(rollupDataGas, l1BaseFee, overhead, scalar)
+		return L1Cost(rollupDataGas, l1BaseFee, overhead, scalar, daFee, daFeeScalar)
 	}
 }
 
-func L1Cost(rollupDataGas uint64, l1BaseFee, overhead, scalar *big.Int) *big.Int {
-	l1GasUsed := new(big.Int).SetUint64(rollupDataGas)
-	l1GasUsed = l1GasUsed.Add(l1GasUsed, overhead)
-	l1Cost := l1GasUsed.Mul(l1GasUsed, l1BaseFee)
-	l1Cost = l1Cost.Mul(l1Cost, scalar)
-	return l1Cost.Div(l1Cost, big.NewInt(1_000_000))
+func L1Cost(rollupDataGas uint64, l1BaseFee, overhead, scalar, daFee, DaFeeScalar *big.Int) *big.Int {
+	daGasUsed := new(big.Int).SetUint64(rollupDataGas)
+	outputGasUsed := overhead
+	daCost := new(big.Int).Mul(daGasUsed, daFee)
+	daCost = new(big.Int).Mul(daCost, DaFeeScalar)
+	outputCost := new(big.Int).Mul(outputGasUsed, l1BaseFee)
+	outputCost = new(big.Int).Mul(outputCost, scalar)
+	totalCost := new(big.Int).Add(daCost, outputCost)
+	return new(big.Int).Div(totalCost, big.NewInt(1_000_000))
 }

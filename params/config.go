@@ -701,12 +701,12 @@ func (c *ChainConfig) IsRegolith(time uint64) bool {
 	return isTimestampForked(c.RegolithTime, time)
 }
 
-// IsMantle returns whether the node is an mantle node or not.
+// IsMantle returns whether the node is a mantle node or not.
 func (c *ChainConfig) IsMantle() bool {
 	return c.Mantle != nil
 }
 
-// IsMantleBedrock returns true iff this is an mantle node & bedrock is active
+// IsMantleBedrock returns true iff this is a mantle node & bedrock is active
 func (c *ChainConfig) IsMantleBedrock(num *big.Int) bool {
 	return c.IsMantle() && c.IsBedrock(num)
 }
@@ -715,7 +715,7 @@ func (c *ChainConfig) IsMantleRegolith(time uint64) bool {
 	return c.IsMantle() && c.IsRegolith(time)
 }
 
-// IsMantlePreBedrock returns true iff this is an mantle node & bedrock is not yet active
+// IsMantlePreBedrock returns true iff this is a mantle node & bedrock is not yet active
 func (c *ChainConfig) IsMantlePreBedrock(num *big.Int) bool {
 	return c.IsMantle() && !c.IsBedrock(num)
 }
