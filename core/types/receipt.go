@@ -526,7 +526,7 @@ func (rs Receipts) DeriveFields(config *params.ChainConfig, hash common.Hash, nu
 			feeScalar := new(big.Float).Quo(fscalar, fdivisor)
 			for i := 0; i < len(rs); i++ {
 				if !txs[i].IsDepositTx() {
-					gas := txs[i].RollupDataGas().DataGas(time, number, config)
+					gas := txs[i].RollupDataGas().DataGas(time, config)
 					rs[i].L1GasPrice = l1Basefee
 					rs[i].L1GasUsed = new(big.Int).SetUint64(gas)
 					rs[i].L1Fee = L1Cost(gas, l1Basefee, overhead, scalar)
